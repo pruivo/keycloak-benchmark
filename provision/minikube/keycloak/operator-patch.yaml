@@ -6,6 +6,8 @@ spec:
     spec:
       containers:
         - name: keycloak-operator
+          image: quay.io/pruivo/keycloak-operator:xsite
+          imagePullPolicy: Always
           env:
             - name: OPERATOR_KEYCLOAK_IMAGE
               value: ${KC_CONTAINER_IMAGE}

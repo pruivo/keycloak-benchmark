@@ -18,12 +18,36 @@
 
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:14.0 https://www.infinispan.org/schemas/infinispan-config-14.0.xsd"
+        xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-14.0.xsd
+                        urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd"
         xmlns="urn:infinispan:config:14.0">
+
+    <jgroups>
+        <stack name="relay-tunnel" extends="udp">
+            <TUNNEL xmlns="urn:org:jgroups"
+                    bind_addr="${jgroups.relay.bind.address:SITE_LOCAL}"
+                    bind_port="${jgroups.relay.bind.port:0}"
+                    gossip_router_hosts="${env.jgroups.xsite.gossiprouters}"
+                    port_range="0"
+                    stack.combine="REPLACE"
+                    stack.position="UDP"
+            />
+            <!-- we are unable to use FD_SOCK with openshift -->
+            <FD_SOCK2 stack.combine="REMOVE" />
+        </stack>
+        <stack name="xsite" extends="kubernetes">
+            <relay.RELAY2 xmlns="urn:org:jgroups"
+                          site="${env.jgroups.xsite.name}"
+                          max_site_masters="1" />
+            <remote-sites default-stack="relay-tunnel">
+                <remote-site name="${env.jgroups.xsite.name}" />
+            </remote-sites>
+        </stack>
+    </jgroups>
 
     <!-- the statistics="true" attribute is not part of the original KC config and was added by Keycloak Benchmark -->
     <cache-container name="keycloak" statistics="true">
-        <transport lock-timeout="60000"/>
+        <transport lock-timeout="60000" stack="xsite"/>
         <local-cache name="realms" simple-cache="true" statistics="true">
             <encoding>
                 <key media-type="application/x-java-object"/>

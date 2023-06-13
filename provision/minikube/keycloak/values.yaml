@@ -32,3 +32,8 @@ customInfinispanConfig: false
 portOffset: 0
 keycloakAdminPassword: admin
 disableIngressStickySession: false
+xsite:
+  enabled: false
+  site: site1
+  secretName: jgrp-tls
+  keystoreAlias: server

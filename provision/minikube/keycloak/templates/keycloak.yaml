@@ -262,3 +262,14 @@ spec:
                       - key: tls.pk8
                         path: client.root.key
 {{ end }}
+{{- if .Values.xsite.enabled }}
+    crossSite:
+      site: {{ .Values.xsite.site }}
+      gossipRouterHostnames:
+        - {{ .Values.xsite.router }}
+      tls:
+        enabled: true
+        secretName: {{ .Values.xsite.secretName }}
+        keystore:
+          alias: {{ .Values.xsite.keystoreAlias }}
+{{- end }}
