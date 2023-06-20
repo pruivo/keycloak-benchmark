@@ -36,6 +36,7 @@
             <FD_SOCK2 stack.combine="REMOVE" />
         </stack>
         <stack name="xsite" extends="kubernetes">
+            <dns.DNS_PING dns_query="${env.jgroups.dns.query}" stack.combine="COMBINE" />
             <relay.RELAY2 xmlns="urn:org:jgroups"
                           site="${env.jgroups.xsite.name}"
                           max_site_masters="1" />
@@ -64,21 +65,45 @@
         </local-cache>
         <distributed-cache name="sessions" owners="2" statistics="true">
             <expiration lifespan="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </distributed-cache>
         <distributed-cache name="authenticationSessions" owners="2" statistics="true">
             <expiration lifespan="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </distributed-cache>
         <distributed-cache name="offlineSessions" owners="2" statistics="true">
             <expiration lifespan="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </distributed-cache>
         <distributed-cache name="clientSessions" owners="2" statistics="true">
             <expiration lifespan="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </distributed-cache>
         <distributed-cache name="offlineClientSessions" owners="2" statistics="true">
             <expiration lifespan="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </distributed-cache>
         <distributed-cache name="loginFailures" owners="2" statistics="true">
             <expiration lifespan="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </distributed-cache>
         <local-cache name="authorization" simple-cache="true" statistics="true">
             <encoding>
@@ -89,6 +114,10 @@
         </local-cache>
         <replicated-cache name="work" statistics="true">
             <expiration lifespan="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </replicated-cache>
         <local-cache name="keys" simple-cache="true" statistics="true">
             <encoding>
@@ -105,6 +134,10 @@
             </encoding>
             <expiration max-idle="-1" lifespan="-1" interval="300000"/>
             <memory max-count="-1"/>
+            <backups>
+                <backup site="site1" />
+                <backup site="site2" />
+            </backups>
         </distributed-cache>
     </cache-container>
 </infinispan>

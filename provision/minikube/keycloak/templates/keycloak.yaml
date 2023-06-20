@@ -99,6 +99,8 @@ spec:
       secret:
         name: keycloak-db-secret
         key: password
+    - name: cache-stack
+      value: xsite
   http:
     tlsSecret: keycloak-tls-secret
   instances: {{ .Values.instances }}
