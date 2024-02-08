@@ -72,6 +72,9 @@ spec:
   # tag::keycloak-ispn[]
   additionalOptions:
   # end::keycloak-ispn[]
+    # Workaround until https://github.com/keycloak/keycloak/issues/26910 is available
+    - name: truststore-paths
+      value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt,/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
 {{- if or (eq .Values.database "infinispan") (eq .Values.database "postgres+infinispan") }}
     - name: storage-hotrod-host
       value: infinispan
