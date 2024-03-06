@@ -33,7 +33,7 @@ tasks:
     internal: true
     dir: ".task/keycloak"
     cmds:
-      - ./mvnw clean install -DskipTests -Poperator -am -pl quarkus/dist,operator
+      - #./mvnw -Denforcer.skip clean install -DskipTests -Poperator -am -pl quarkus/dist,operator
       - (git rev-parse HEAD && git diff) | sha256sum > ../status-build-keycloak-dist-source
     sources:
       - .task/subtask-{{.TASK}}.yaml
