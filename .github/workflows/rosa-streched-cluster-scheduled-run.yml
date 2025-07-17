@@ -25,7 +25,7 @@ jobs:
   meta:
     runs-on: ubuntu-latest
     outputs:
-      cidr: ${{ steps.cidr.outputs.CIDR }}
+      cidr: ${{ steps.cluster.outputs.CIDR }}
       clusterName: ${{ steps.cluster.outputs.CLUSTER_NAME }}
       region: ${{ steps.cluster.outputs.REGION }}
       availabilityZones: ${{ steps.cluster.outputs.ZONES }}
