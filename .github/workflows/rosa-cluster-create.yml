@@ -29,6 +29,10 @@ on:
       infinispan_operator_olm_name:
         type: string
         default: infinispan
+      useSingleAz:
+        description: 'Check to create an OpenShift cluster in a single availability zone.'
+        type: boolean
+        default: true
 
   workflow_dispatch:
     inputs:
