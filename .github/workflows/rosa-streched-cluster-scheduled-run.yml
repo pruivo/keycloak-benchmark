@@ -54,19 +54,20 @@ jobs:
         env:
           CLUSTER_PREFIX: ${{ env.CLUSTER_NAME }}
 
-      - name: Process the list input
+      - name: Process availability zones
         run: |
-          IFS=',' read -r -a azs <<< "${{ inputs.availabilityZones }}"
-          echo "ZONES=${azs[@]/#/${{ env.REGION }}}" >> ${GITHUB_OUTPUT}
+          ZONES=$(prefix_region_to_zones.sh "${{ env.REGION }}" "${{ inputs.availabilityZones }}"
+          echo "ZONES=${ZONES}" >> ${GITHUB_OUTPUT}
+        working-directory: provision/aws
 
-#  cluster:
-#    if: ${{ inputs.createCluster }}
-#    needs: meta
-#    uses: ./.github/workflows/rosa-cluster-create.yml
-#    with:
-#      cidr: ${{ needs.meta.outputs.cidr }}
-#      clusterName: ${{ env.CLUSTER_NAME }}
-#      region: ${{ env.REGION }}
-#      availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
-#      useSingleAz: false
-#    secrets: inherit
+  cluster:
+    if: ${{ inputs.createCluster }}
+    needs: meta
+    uses: ./.github/workflows/rosa-cluster-create.yml
+    with:
+      cidr: ${{ needs.meta.outputs.cidr }}
+      clusterName: ${{ env.CLUSTER_NAME }}
+      region: ${{ env.REGION }}
+      availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
+      useSingleAz: false
+    secrets: inherit
