@@ -93,6 +93,11 @@ jobs:
           aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
           rosa-token: ${{ secrets.ROSA_TOKEN }}
 
+      - name: Login to OpenShift cluster
+        uses: ./.github/actions/oc-keycloak-login
+        with:
+          clusterName: ${{ needs.meta.outputs.clusterName }}
+
       - name: Deploy Grafana
         run: task monitoring
         working-directory: provision/openshift
