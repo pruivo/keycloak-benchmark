@@ -1,0 +1,99 @@
+# https://taskfile.dev
+
+version: '3'
+
+includes:
+  rds:
+    taskfile: ../aws/rds/Taskfile.yaml
+    internal: true
+  keycloak:
+    taskfile: ../keycloak-tasks/Utils.yaml
+    dir: ../keycloak-tasks/
+    internal: true
+  ispn:
+    taskfile: ../infinispan/Utils.yaml
+    dir: ../infinispan/
+    internal: true
+
+output: prefixed
+dotenv: [ '.env' ]
+set: [ pipefail ]
+
+tasks:
+  default:
+    cmd: echo "#"
+
+  deploy-aurora:
+    desc: "Creates a single region Aurora Database"
+    requires:
+      vars:
+        - ROSA_CLUSTER_NAME
+        - AURORA_CLUSTER
+        - AURORA_REGION
+    cmds:
+      - task: rds:create-peering-connection
+      - task: rds:create-aurora
+
+  undeploy-aurora:
+    desc: "Deletes a single region Aurora Database"
+    requires:
+      vars:
+        - ROSA_CLUSTER_NAME
+        - AURORA_CLUSTER
+        - AURORA_REGION
+    cmds:
+      - task: rds:delete-peering-connection
+      - task: rds:delete-aurora
+
+  deploy-keycloak:
+    desc: "Deploys Keycloak in OpenShift"
+    requires:
+      vars:
+        - ROSA_CLUSTER_NAME
+        - AURORA_CLUSTER
+        - AURORA_REGION
+        - KC_NAMESPACE_PREFIX
+    env:
+      AURORA_CLUSTER: "{{.AURORA_CLUSTER}}"
+      AURORA_REGION: "{{.AURORA_REGION}}"
+      ROSA_CLUSTER_NAME: "{{.ROSA_CLUSTER_NAME}}"
+    vars:
+      TMP_DIR: "{{.TASKFILE_DIR}}/.task"
+      AURORA_ENDPOINT_FILE: "{{.TMP_DIR}}/aurora-endpoint"
+      ISPN_DIR: "{{.TASKFILE_DIR}}/../infinispan/.task/kubecfg"
+    cmds:
+      - mkdir "{{.TMP_DIR}}"
+      - task: rds:get-aurora-endpoint
+        vars:
+          OUTPUT_FILE: "{{.AURORA_ENDPOINT_FILE}}"
+      - task: ispn:rosa-oc-login
+      - task: keycloak:install-keycloak
+        vars:
+          NAMESPACE: "{{.KC_NAMESPACE_PREFIX}}keycloak"
+          KUBECONFIG: "{{.ISPN_DIR}}/{{.ROSA_CLUSTER_NAME}}"
+          KC_HOSTNAME_OVERRIDE: "{{.KC_HOSTNAME_OVERRIDE}}"
+          KC_HEALTH_HOSTNAME: "{{.KC_HEALTH_HOSTNAME}}"
+          KC_HOSTNAME_SUFFIX:
+            sh: cat {{.ISPN_DIR}}/ocp-prefix-{{.ROSA_CLUSTER_NAME}}
+          KC_DATABASE_URL:
+            sh: cat {{.AURORA_ENDPOINT_FILE}}
+          KC_ADMIN_PASSWORD:
+            sh: "aws secretsmanager get-secret-value --region eu-central-1 --secret-id keycloak-master-password --query SecretString --output text --no-cli-pager || echo admin"
+          KC_DATABASE: "aurora-postgres"
+          KC_CUSTOM_INFINISPAN_CONFIG: "false"
+          KC_STRETCH_CLUSTER: "true"
+
+  undeploy-keycloak:
+    desc: "Undeploy Keycloak in OpenShift"
+    requires:
+      vars:
+        - ROSA_CLUSTER_NAME
+        - KC_NAMESPACE_PREFIX
+    vars:
+      ISPN_DIR: "{{.TASKFILE_DIR}}/../infinispan/.task/kubecfg"
+    cmds:
+      - task: ispn:rosa-oc-login
+      - task: keycloak:uninstall-keycloak
+        vars:
+          KUBECONFIG: "{{.ISPN_DIR}}/{{.ROSA_CLUSTER_NAME}}"
+          NAMESPACE: "{{.KC_NAMESPACE_PREFIX}}keycloak"
