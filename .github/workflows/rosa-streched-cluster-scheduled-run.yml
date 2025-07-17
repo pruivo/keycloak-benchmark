@@ -30,7 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       cidr: ${{ steps.cidr.outputs.CIDR }}
-      availabilityZones: ${{ steps.cidr.outputs.ZONES }}
+      clusterName: ${{ steps.cluster.outputs.CLUSTER_NAME }}
+      region: ${{ steps.cluster.outputs.REGION }}
+      availabilityZones: ${{ steps.cluster.outputs.ZONES }}
     concurrency:
       group: multi-az-meta
     steps:
@@ -45,6 +47,20 @@ jobs:
           aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
           rosa-token: ${{ secrets.ROSA_TOKEN }}
 
+      - name: Compute Cluster Info
+        id: cluster
+        working-directory: provision/aws
+        run: |
+          REGION=${{ inputs.region || vars.AWS_DEFAULT_REGION }}
+          CLUSTER_NAME=${{ inputs.clusterName || format('gh-{0}-multi-az', github.repository_owner) }}
+          CLUSTER_PREFIX=${CLUSTER_NAME}
+          ZONES=$(prefix_region_to_zones.sh "${REGION}" "${{ inputs.availabilityZones }}"
+
+          echo "CLUSTER_NAME=${CLUSTER_NAME}" >> ${GITHUB_OUTPUT}
+          echo "REGION=${REGION}" >> ${GITHUB_OUTPUT}
+          echo "ZONES=${ZONES}" >> ${GITHUB_OUTPUT}
+          echo "CIDR=$(echo $(./rosa_machine_cidr.sh) | jq -r .cidr_a )" >> ${GITHUB_OUTPUT}
+
       - name: Calculate Cluster CIDR
         id: cidr
         run: |
@@ -54,20 +70,14 @@ jobs:
         env:
           CLUSTER_PREFIX: ${{ env.CLUSTER_NAME }}
 
-      - name: Process availability zones
-        run: |
-          ZONES=$(prefix_region_to_zones.sh "${{ env.REGION }}" "${{ inputs.availabilityZones }}"
-          echo "ZONES=${ZONES}" >> ${GITHUB_OUTPUT}
-        working-directory: provision/aws
-
   cluster:
     if: ${{ inputs.createCluster }}
     needs: meta
     uses: ./.github/workflows/rosa-cluster-create.yml
     with:
       cidr: ${{ needs.meta.outputs.cidr }}
-      clusterName: ${{ env.CLUSTER_NAME }}
-      region: ${{ env.REGION }}
+      clusterName: ${{ needs.meta.outputs.clusterName }}
+      region: ${{ needs.meta.outputs.region }}
       availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
       useSingleAz: false
     secrets: inherit
