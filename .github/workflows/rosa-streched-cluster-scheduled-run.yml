@@ -1,0 +1,72 @@
+name: ROSA Stretched Cluster - Scheduled Run
+
+on:
+  schedule:
+    - cron: '0 5 * * 1' # Runs At 05:00 UTC on Monday.
+  workflow_dispatch:
+    inputs:
+      createCluster:
+        description: 'Check to Create Cluster.'
+        type: boolean
+        default: true
+      clusterName:
+        description: 'The multi-az OpenShift cluster name'
+        type: string
+      region:
+        description: 'The AWS region to create both clusters in. Defaults to "vars.AWS_DEFAULT_REGION" if omitted.'
+        type: string
+      availabilityZones:
+        description: 'A comma-separated list of availability zone suffixes, in the region, to deploy the OpenShift cluster.'
+        type: string
+        required: true
+        default: "a,b,c"
+
+env:
+  CLUSTER_NAME: ${{ inputs.clusterName || format('gh-{0}-multi-az', github.repository_owner) }}
+  REGION: ${{ inputs.region || vars.AWS_DEFAULT_REGION }}
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      cidr: ${{ steps.cidr.outputs.CIDR }}
+      availabilityZones: ${{ steps.cidr.outputs.ZONES }}
+    concurrency:
+      group: multi-az-meta
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup ROSA CLI
+        uses: ./.github/actions/rosa-cli-setup
+        with:
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
+          rosa-token: ${{ secrets.ROSA_TOKEN }}
+
+      - name: Calculate Cluster CIDR
+        id: cidr
+        run: |
+          set -x
+          echo "CIDR=$(echo $(./rosa_machine_cidr.sh) | jq -r .cidr_a )" >> ${GITHUB_OUTPUT}
+        working-directory: provision/aws
+        env:
+          CLUSTER_PREFIX: ${{ env.CLUSTER_NAME }}
+
+      - name: Process the list input
+        run: |
+          IFS=',' read -r -a azs <<< "${{ inputs.availabilityZones }}"
+          echo "ZONES=${azs[@]/#/${{ env.REGION }}}" >> ${GITHUB_OUTPUT}
+
+  cluster:
+    if: ${{ inputs.createCluster }}
+    needs: meta
+    uses: ./.github/workflows/rosa-cluster-create-to-fail-here.yml
+    with:
+      cidr: ${{ needs.meta.outputs.cidr }}
+      clusterName: ${{ env.CLUSTER_NAME }}
+      region: ${{ env.REGION }}
+      availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
+      useSingleAz: false
+    secrets: inherit
