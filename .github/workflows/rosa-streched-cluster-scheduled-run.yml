@@ -54,7 +54,7 @@ jobs:
           REGION=${{ inputs.region || vars.AWS_DEFAULT_REGION }}
           CLUSTER_NAME=${{ inputs.clusterName || format('gh-{0}-multi-az', github.repository_owner) }}
           CLUSTER_PREFIX=${CLUSTER_NAME}
-          ZONES=$(prefix_region_to_zones.sh "${REGION}" "${{ inputs.availabilityZones }}"
+          ZONES=$(./prefix_region_to_zones.sh "${REGION}" "${{ inputs.availabilityZones }}")
 
           echo "CLUSTER_NAME=${CLUSTER_NAME}" >> ${GITHUB_OUTPUT}
           echo "REGION=${REGION}" >> ${GITHUB_OUTPUT}
