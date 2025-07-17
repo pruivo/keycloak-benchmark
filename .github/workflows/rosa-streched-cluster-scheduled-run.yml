@@ -60,9 +60,24 @@ jobs:
 
   cluster:
     name: Create Openshift Cluster
-    runs-on: ubuntu-latest
     if: ${{ inputs.createCluster }}
     needs: meta
+    uses: ./.github/workflows/rosa-cluster-create.yml
+    with:
+      cidr: ${{ needs.meta.outputs.cidr }}
+      clusterName: ${{ needs.meta.outputs.clusterName }}
+      region: ${{ needs.meta.outputs.region }}
+      availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
+      useSingleAz: false
+    secrets: inherit
+
+  monitoring:
+    name: Install Grafana
+    if: ${{ inputs.createCluster }}
+    runs-on: ubuntu-latest
+    needs:
+      - meta
+      - cluster
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -77,15 +92,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
           rosa-token: ${{ secrets.ROSA_TOKEN }}
-
-      - name: Deploy OpenShift
-        uses: ./.github/workflows/rosa-cluster-create.yml
-        with:
-          cidr: ${{ needs.meta.outputs.cidr }}
-          clusterName: ${{ needs.meta.outputs.clusterName }}
-          region: ${{ needs.meta.outputs.region }}
-          availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
-          useSingleAz: false
 
       - name: Deploy Grafana
         run: task monitoring
