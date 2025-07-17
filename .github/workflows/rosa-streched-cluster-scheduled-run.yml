@@ -48,10 +48,9 @@ jobs:
         working-directory: provision/aws
         run: |
           CLUSTER_NAME=${{ inputs.clusterName || format('gh-{0}-az', github.repository_owner) }}
-          CLUSTER_PREFIX=${CLUSTER_NAME}
           REGION=${{ inputs.region || vars.AWS_DEFAULT_REGION }}
           ZONES=$(./prefix_region_to_zones.sh "${REGION}" "${{ inputs.availabilityZones }}")
-          CIDR="$(./rosa_machine_cidr.sh | jq -r .cidr_a)"
+          CIDR=$(CLUSTER_PREFIX=${CLUSTER_NAME}./rosa_machine_cidr.sh | jq -r .cidr_a)
 
           echo "CLUSTER_NAME=${CLUSTER_NAME}" >> ${GITHUB_OUTPUT}
           echo "REGION=${REGION}" >> ${GITHUB_OUTPUT}
