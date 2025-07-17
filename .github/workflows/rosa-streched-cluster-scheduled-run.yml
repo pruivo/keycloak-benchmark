@@ -59,14 +59,14 @@ jobs:
           IFS=',' read -r -a azs <<< "${{ inputs.availabilityZones }}"
           echo "ZONES=${azs[@]/#/${{ env.REGION }}}" >> ${GITHUB_OUTPUT}
 
-  cluster:
-    if: ${{ inputs.createCluster }}
-    needs: meta
-    uses: ./.github/workflows/rosa-cluster-create-to-fail-here.yml
-    with:
-      cidr: ${{ needs.meta.outputs.cidr }}
-      clusterName: ${{ env.CLUSTER_NAME }}
-      region: ${{ env.REGION }}
-      availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
-      useSingleAz: false
-    secrets: inherit
+#  cluster:
+#    if: ${{ inputs.createCluster }}
+#    needs: meta
+#    uses: ./.github/workflows/rosa-cluster-create.yml
+#    with:
+#      cidr: ${{ needs.meta.outputs.cidr }}
+#      clusterName: ${{ env.CLUSTER_NAME }}
+#      region: ${{ env.REGION }}
+#      availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
+#      useSingleAz: false
+#    secrets: inherit
