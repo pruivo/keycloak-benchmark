@@ -21,10 +21,6 @@ on:
         required: true
         default: "a,b,c"
 
-env:
-  CLUSTER_NAME: ${{ inputs.clusterName || format('gh-{0}-multi-az', github.repository_owner) }}
-  REGION: ${{ inputs.region || vars.AWS_DEFAULT_REGION }}
-
 jobs:
   meta:
     runs-on: ubuntu-latest
@@ -51,24 +47,16 @@ jobs:
         id: cluster
         working-directory: provision/aws
         run: |
-          REGION=${{ inputs.region || vars.AWS_DEFAULT_REGION }}
-          CLUSTER_NAME=${{ inputs.clusterName || format('gh-{0}-multi-az', github.repository_owner) }}
+          CLUSTER_NAME=${{ inputs.clusterName || format('gh-{0}-az', github.repository_owner) }}
           CLUSTER_PREFIX=${CLUSTER_NAME}
+          REGION=${{ inputs.region || vars.AWS_DEFAULT_REGION }}
           ZONES=$(./prefix_region_to_zones.sh "${REGION}" "${{ inputs.availabilityZones }}")
+          CIDR="$(./rosa_machine_cidr.sh | jq -r .cidr_a)"
 
           echo "CLUSTER_NAME=${CLUSTER_NAME}" >> ${GITHUB_OUTPUT}
           echo "REGION=${REGION}" >> ${GITHUB_OUTPUT}
           echo "ZONES=${ZONES}" >> ${GITHUB_OUTPUT}
-          echo "CIDR=$(echo $(./rosa_machine_cidr.sh) | jq -r .cidr_a )" >> ${GITHUB_OUTPUT}
-
-      - name: Calculate Cluster CIDR
-        id: cidr
-        run: |
-          set -x
-          echo "CIDR=$(echo $(./rosa_machine_cidr.sh) | jq -r .cidr_a )" >> ${GITHUB_OUTPUT}
-        working-directory: provision/aws
-        env:
-          CLUSTER_PREFIX: ${{ env.CLUSTER_NAME }}
+          echo "CIDR=${CIDR}" >> ${GITHUB_OUTPUT}
 
   cluster:
     if: ${{ inputs.createCluster }}
