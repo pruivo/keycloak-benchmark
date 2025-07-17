@@ -23,6 +23,7 @@ on:
 
 jobs:
   meta:
+    name: Metadata
     runs-on: ubuntu-latest
     outputs:
       cidr: ${{ steps.cluster.outputs.CIDR }}
@@ -58,6 +59,7 @@ jobs:
           echo "CIDR=${CIDR}" >> ${GITHUB_OUTPUT}
 
   cluster:
+    name: Create Openshift Cluster
     if: ${{ inputs.createCluster }}
     needs: meta
     uses: ./.github/workflows/rosa-cluster-create.yml
