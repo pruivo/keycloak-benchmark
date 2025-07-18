@@ -9,6 +9,14 @@ on:
         description: 'Check to Create Cluster.'
         type: boolean
         default: true
+      createAurora:
+        description: 'Check to Create Aurora Database.'
+        type: boolean
+        default: true
+      createKeycloak:
+        description: 'Check to Create Keycloak.'
+        type: boolean
+        default: true
       clusterName:
         description: 'The multi-az OpenShift cluster name'
         type: string
@@ -101,3 +109,56 @@ jobs:
       - name: Deploy Grafana
         run: task monitoring
         working-directory: provision/openshift
+
+  aurora:
+    name: Install Aurora Database
+    if: ${{ inputs.createAurora }}
+    runs-on: ubuntu-latest
+    needs:
+      - meta
+      - cluster
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go Task
+        uses: ./.github/actions/task-setup
+
+      - name: Deploy Grafana
+        run: task deploy-aurora
+        working-directory: provision/keycloak-stretched
+        env:
+          AURORA_REGION: ${{ needs.meta.outputs.region }}
+          AURORA_CLUSTER: ${{ needs.meta.outputs.clusterName }}
+          ROSA_CLUSTER_NAME: ${{ needs.meta.outputs.clusterName }}
+
+  keycloak:
+    name: Install Keycloak
+    if: ${{ inputs.createKeycloak }}
+    runs-on: ubuntu-latest
+    needs:
+      - meta
+      - aurora
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go Task
+        uses: ./.github/actions/task-setup
+
+      - name: Setup ROSA CLI
+        uses: ./.github/actions/rosa-cli-setup
+        with:
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
+          rosa-token: ${{ secrets.ROSA_TOKEN }}
+
+      - name: Deploy Keycloak
+        run: task deploy-keycloak
+        working-directory: provision/keycloak-stretched
+        env:
+          ROSA_CLUSTER_NAME: ${{ needs.meta.outputs.clusterName }}
+          AURORA_CLUSTER: ${{ needs.meta.outputs.clusterName }}
+          AURORA_REGION: ${{ needs.meta.outputs.region }}
+          KC_NAMESPACE_PREFIX: github-
