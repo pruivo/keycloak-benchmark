@@ -132,7 +132,7 @@ jobs:
           aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
           rosa-token: ${{ secrets.ROSA_TOKEN }}
 
-      - name: Deploy Grafana
+      - name: Deploy Aurora
         run: task deploy-aurora
         working-directory: provision/keycloak-stretched
         env:
