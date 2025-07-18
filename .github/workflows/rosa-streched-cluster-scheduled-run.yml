@@ -199,10 +199,15 @@ jobs:
           aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
           rosa-token: ${{ secrets.ROSA_TOKEN }}
 
+      - name: Login to OpenShift cluster
+        uses: ./.github/actions/oc-keycloak-login
+        with:
+          clusterName: ${{ needs.meta.outputs.clusterName }}
+
       - name: Create Keycloak dataset
         uses: ./.github/actions/keycloak-create-dataset
         with:
-          project: github-keycloak
+          project: runner-keycloak
 
   run-benchmark:
     name: Run Benchmark
@@ -230,6 +235,11 @@ jobs:
         uses: ./.github/actions/ec2-create-instances
         with:
           region: ${{ needs.meta.outputs.region }}
+
+      - name: Login to OpenShift cluster
+        uses: ./.github/actions/oc-keycloak-login
+        with:
+          clusterName: ${{ needs.meta.outputs.clusterName }}
 
       - name: Get URLs
         uses: ./.github/actions/get-keycloak-url
