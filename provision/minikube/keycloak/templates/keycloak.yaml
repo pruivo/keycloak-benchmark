@@ -17,20 +17,22 @@ spec:
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
           - weight: 100
-            matchLabels:
-              app: keycloak
-              app.kubernetes.io/managed-by: keycloak-operator
-              app.kubernetes.io/component: server
-              app.kubernetes.io/instance: keycloak
             podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: keycloak
+                  app.kubernetes.io/managed-by: keycloak-operator
+                  app.kubernetes.io/component: server
+                  app.kubernetes.io/instance: keycloak
               topologyKey: topology.kubernetes.io/zone
           - weight: 90
-            matchLabels:
-              app: keycloak
-              app.kubernetes.io/managed-by: keycloak-operator
-              app.kubernetes.io/component: server
-              app.kubernetes.io/instance: keycloak
             podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: keycloak
+                  app.kubernetes.io/managed-by: keycloak-operator
+                  app.kubernetes.io/component: server
+                  app.kubernetes.io/instance: keycloak
               topologyKey: kubernetes.io/hostname
   {{- end}}
   hostname:
