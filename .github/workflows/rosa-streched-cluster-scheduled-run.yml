@@ -115,11 +115,7 @@ jobs:
     needs:
       - meta
       - cluster
-    if: |
-      always() &&
-      !canceled() &&
-      ${{ inputs.createAurora }} &&
-      (needs.cluster.result == 'skipped' || needs.cluster.result == 'success')
+    if: ${{ always() && !cancelled() && inputs.createAurora && (needs.cluster.result == 'skipped' || needs.cluster.result == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -142,11 +138,7 @@ jobs:
     needs:
       - meta
       - aurora
-    if: |
-      always() &&
-      !canceled() &&
-      ${{ inputs.createKeycloak }} &&
-      (needs.aurora.result == 'skipped' || needs.aurora.result == 'success')
+    if: ${{ always() && !cancelled() && inputs.createKeycloak && (needs.aurora.result == 'skipped' || needs.aurora.result == 'success') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
