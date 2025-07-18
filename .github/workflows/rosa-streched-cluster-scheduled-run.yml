@@ -1,8 +1,6 @@
-name: ROSA Stretched Cluster - Scheduled Run
+name: ROSA Stretched Cluster
 
 on:
-  schedule:
-    - cron: '0 5 * * 1' # Runs At 05:00 UTC on Monday.
   workflow_dispatch:
     inputs:
       createCluster:
@@ -15,6 +13,14 @@ on:
         default: true
       createKeycloak:
         description: 'Check to Create Keycloak.'
+        type: boolean
+        default: true
+      createDataset:
+        description: 'Check to Create Dataset.'
+        type: boolean
+        default: true
+      runBenchmark:
+        description: 'Check to run benchmark.'
         type: boolean
         default: true
       clusterName:
@@ -169,4 +175,80 @@ jobs:
           ROSA_CLUSTER_NAME: ${{ needs.meta.outputs.clusterName }}
           AURORA_CLUSTER: ${{ needs.meta.outputs.clusterName }}
           AURORA_REGION: ${{ needs.meta.outputs.region }}
-          KC_NAMESPACE_PREFIX: github-
+          KC_NAMESPACE_PREFIX: runner-
+
+  create-dataset:
+    name: Create DataSet
+    runs-on: ubuntu-latest
+    needs:
+      - meta
+      - keycloak
+    if: ${{ always() && !cancelled() && inputs.createDataset && (needs.keycloak.result == 'skipped' || needs.keycloak.result == 'success') }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go Task
+        uses: ./.github/actions/task-setup
+
+      - name: Setup ROSA CLI
+        uses: ./.github/actions/rosa-cli-setup
+        with:
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
+          rosa-token: ${{ secrets.ROSA_TOKEN }}
+
+      - name: Create Keycloak dataset
+        uses: ./.github/actions/keycloak-create-dataset
+        with:
+          project: github-keycloak
+
+  run-benchmark:
+    name: Run Benchmark
+    runs-on: ubuntu-latest
+    needs:
+      - meta
+      - create-dataset
+    if: ${{ always() && !cancelled() && inputs.runBenchmark && (needs.create-dataset.result == 'skipped' || needs.create-dataset.result == 'success') }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go Task
+        uses: ./.github/actions/task-setup
+
+      - name: Setup ROSA CLI
+        uses: ./.github/actions/rosa-cli-setup
+        with:
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
+          rosa-token: ${{ secrets.ROSA_TOKEN }}
+
+      - name: Create AWS EC2 instances
+        uses: ./.github/actions/ec2-create-instances
+        with:
+          region: ${{ needs.meta.outputs.region }}
+
+      - name: Get URLs
+        uses: ./.github/actions/get-keycloak-url
+        with:
+          project: runner-keycloak
+
+      - name: Run Authorization Code scenario
+        run: >
+          ./benchmark.sh ${{ needs.meta.outputs.region }}
+          --scenario=keycloak.scenario.authentication.AuthorizationCode
+          --server-url=${{ env.KEYCLOAK_URL }}
+          --realm-name=realm-0
+          --users-per-sec=100
+          --ramp-up=20
+          --logout-percentage=100
+          --measurement=300
+          --users-per-realm=100
+          --clients-per-realm=100
+          --log-http-on-failure
+          --sla-error-percentage=0.001
+        continue-on-error: true
+        working-directory: ansible
