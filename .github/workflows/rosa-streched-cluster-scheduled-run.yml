@@ -124,6 +124,14 @@ jobs:
       - name: Setup Go Task
         uses: ./.github/actions/task-setup
 
+      - name: Setup ROSA CLI
+        uses: ./.github/actions/rosa-cli-setup
+        with:
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-default-region: ${{ vars.AWS_DEFAULT_REGION }}
+          rosa-token: ${{ secrets.ROSA_TOKEN }}
+
       - name: Deploy Grafana
         run: task deploy-aurora
         working-directory: provision/keycloak-stretched
