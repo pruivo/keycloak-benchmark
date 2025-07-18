@@ -30,11 +30,11 @@ tasks:
         - ROSA_CLUSTER_NAME
         - AURORA_CLUSTER
         - AURORA_REGION
-    env:
-      AURORA_INSTANCES: "{{.AURORA_INSTANCES | default 3}}"
     cmds:
-      - task: rds:create-peering-connection
       - task: rds:create-aurora
+        vars:
+          AURORA_INSTANCES: "{{.AURORA_INSTANCES | default 3}}"
+      - task: rds:create-peering-connection
 
   undeploy-aurora:
     desc: "Deletes a single region Aurora Database"
