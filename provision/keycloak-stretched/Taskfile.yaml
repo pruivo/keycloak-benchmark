@@ -14,17 +14,21 @@ includes:
     taskfile: ../infinispan/Utils.yaml
     dir: ../infinispan/
     internal: true
+  common:
+    taskfile: ../common
+    internal: true
 
 output: prefixed
 dotenv: [ '.env' ]
 set: [ pipefail ]
 
 tasks:
-  default:
-    cmd: echo "#"
 
   deploy-aurora:
     desc: "Creates a single region Aurora Database"
+    deps:
+      - common:split
+      - common:env
     requires:
       vars:
         - ROSA_CLUSTER_NAME
@@ -49,6 +53,9 @@ tasks:
 
   deploy-keycloak:
     desc: "Deploys Keycloak in OpenShift"
+    deps:
+      - common:split
+      - common:env
     requires:
       vars:
         - ROSA_CLUSTER_NAME
@@ -64,7 +71,7 @@ tasks:
       AURORA_ENDPOINT_FILE: "{{.TMP_DIR}}/aurora-endpoint"
       ISPN_DIR: "{{.TASKFILE_DIR}}/../infinispan/.task/kubecfg"
     cmds:
-      - mkdir "{{.TMP_DIR}}"
+      - test -d "{{.TMP_DIR}}" || mkdir "{{.TMP_DIR}}"
       - task: rds:get-aurora-endpoint
         vars:
           OUTPUT_FILE: "{{.AURORA_ENDPOINT_FILE}}"
@@ -84,6 +91,20 @@ tasks:
           KC_DATABASE: "aurora-postgres"
           KC_CUSTOM_INFINISPAN_CONFIG: "false"
           KC_STRETCH_CLUSTER: "true"
+          KC_CPU_REQUESTS: 6
+          KC_CPU_LIMITS: 6
+          KC_INSTANCES: 3
+          KC_DISABLE_STICKY_SESSION: "true"
+          KC_CRYOSTAT: "true"
+          KC_IS_ACTIVE_PASSIVE: "false"
+          KC_EXTERNAL_INFINISPAN: "false"
+          KC_MEMORY_REQUESTS_MB: 3000
+          KC_MEMORY_LIMITS_MB: 4000
+          KC_DB_POOL_INITIAL_SIZE: 30
+          KC_DB_POOL_MAX_SIZE: 30
+          KC_DB_POOL_MIN_SIZE: 30
+      - task: wait-cryostat
+      - task: wait-keycloak
 
   undeploy-keycloak:
     desc: "Undeploy Keycloak in OpenShift"
@@ -99,3 +120,39 @@ tasks:
         vars:
           KUBECONFIG: "{{.ISPN_DIR}}/{{.ROSA_CLUSTER_NAME}}"
           NAMESPACE: "{{.KC_NAMESPACE_PREFIX}}keycloak"
+
+  wait-keycloak:
+    desc: "Waits for Keycloak conditions"
+    internal: true
+    requires:
+      vars:
+        - ROSA_CLUSTER_NAME
+        - KC_NAMESPACE_PREFIX
+    vars:
+      NAMESPACE: "{{.KC_NAMESPACE_PREFIX}}keycloak"
+      TIMEOUT: "{{.TIMEOUT | default 1200}}"
+    cmds:
+      - echo "Waiting for Keycloak condition in ROSA cluster {{.ROSA_CLUSTER_NAME}} for {{.TIMEOUT}} seconds"
+      - kubectl wait --for=condition=Available --timeout={{.TIMEOUT}}s deployments.apps/{{ default "keycloak-operator" .KC_OPERATOR_NAME }} -n "{{.NAMESPACE}}"
+      - kubectl wait --for=condition=Ready --timeout={{.TIMEOUT}}s keycloaks.k8s.keycloak.org/keycloak -n "{{.NAMESPACE}}"
+      - kubectl wait --for=condition=RollingUpdate=False --timeout={{.TIMEOUT}}s keycloaks.k8s.keycloak.org/keycloak -n "{{.NAMESPACE}}"
+
+  wait-cryostat:
+    desc: "Waits for Cryostat conditions"
+    internal: true
+    requires:
+      vars:
+        - ROSA_CLUSTER_NAME
+        - KC_NAMESPACE_PREFIX
+    vars:
+      NAMESPACE: "{{.KC_NAMESPACE_PREFIX}}keycloak"
+      TIMEOUT: "{{.TIMEOUT | default 1200}}"
+    cmds:
+      - |
+        if [ "{{.KC_CRYOSTAT}}" != "false" ]; then
+        echo "Waiting for Cryostat condition in ROSA cluster {{.ROSA_CLUSTER_NAME}} for {{.TIMEOUT}} seconds"
+        kubectl wait --for=condition=MainDeploymentProgressing --timeout={{.TIMEOUT}}s cryostats.operator.cryostat.io/cryostat -n "{{.NAMESPACE}}"
+        kubectl wait --for=condition=MainDeploymentAvailable --timeout={{.TIMEOUT}}s cryostats.operator.cryostat.io/cryostat -n "{{.NAMESPACE}}"
+        kubectl wait --for=condition=TLSSetupComplete --timeout={{.TIMEOUT}}s cryostats.operator.cryostat.io/cryostat -n "{{.NAMESPACE}}"
+        exit 0
+        fi
