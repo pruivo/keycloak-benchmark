@@ -18,7 +18,6 @@ on:
       clusterName:
         description: 'The multi-az OpenShift cluster name'
         type: string
-        default: ${{format('gh-{0}-az', github.repository_owner)}}
       region:
         description: 'The AWS region to create both clusters in. Defaults to "vars.AWS_DEFAULT_REGION" if omitted.'
         type: string
