@@ -26,6 +26,7 @@ on:
         type: string
         required: true
         default: "a,b,c"
+  workflow_call:
 
 jobs:
   meta:
