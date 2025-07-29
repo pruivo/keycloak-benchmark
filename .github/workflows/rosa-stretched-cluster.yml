@@ -18,13 +18,13 @@ on:
       clusterName:
         description: 'The multi-az OpenShift cluster name'
         type: string
+        default: ${{format('gh-{0}-az', github.repository_owner)}}
       region:
         description: 'The AWS region to create both clusters in. Defaults to "vars.AWS_DEFAULT_REGION" if omitted.'
         type: string
       availabilityZones:
         description: 'A comma-separated list of availability zone suffixes, in the region, to deploy the OpenShift cluster.'
         type: string
-        required: true
         default: "a,b,c"
   workflow_call:
     inputs:
@@ -49,7 +49,6 @@ on:
       availabilityZones:
         description: 'A comma-separated list of availability zone suffixes, in the region, to deploy the OpenShift cluster.'
         type: string
-        required: true
         default: "a,b,c"
 
 jobs:
