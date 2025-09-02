@@ -102,6 +102,8 @@ jobs:
       region: ${{ needs.meta.outputs.region }}
       availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
       useSingleAz: false
+      computeMachineType: c7g.8xlarge
+      replicas: 3
     secrets: inherit
 
   monitoring:
