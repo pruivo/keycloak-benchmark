@@ -101,6 +101,8 @@ jobs:
       clusterName: ${{ needs.meta.outputs.clusterName }}
       region: ${{ needs.meta.outputs.region }}
       availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
+      computeMachineType: c8g.8xlarge
+      replicas: 3
     secrets: inherit
 
   monitoring:
@@ -143,6 +145,7 @@ jobs:
       name: ${{ needs.meta.outputs.clusterName }}
       region: ${{ needs.meta.outputs.region }}
       instances: ${{ needs.meta.outputs.numberOfZones }}
+      instanceClass: db.r8g.2xlarge
     secrets: inherit
 
   connection:
