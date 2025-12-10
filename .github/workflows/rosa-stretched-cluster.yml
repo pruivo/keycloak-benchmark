@@ -101,6 +101,8 @@ jobs:
       clusterName: ${{ needs.meta.outputs.clusterName }}
       region: ${{ needs.meta.outputs.region }}
       availabilityZones: ${{ needs.meta.outputs.availabilityZones }}
+      computeMachineType: c8g.8xlarge
+      replicas: 3
     secrets: inherit
 
   monitoring:
@@ -143,6 +145,7 @@ jobs:
       name: ${{ needs.meta.outputs.clusterName }}
       region: ${{ needs.meta.outputs.region }}
       instances: ${{ needs.meta.outputs.numberOfZones }}
+      instanceClass: db.r8g.2xlarge
     secrets: inherit
 
   connection:
@@ -209,3 +212,11 @@ jobs:
           AURORA_CLUSTER: ${{ needs.meta.outputs.clusterName }}
           AURORA_REGION: ${{ needs.meta.outputs.region }}
           KC_NAMESPACE_PREFIX: runner-
+          KC_OPERATOR_TAG: "26.4.7"
+          KC_CPU_LIMITS: 24
+          KC_CPU_REQUESTS: 24
+          KC_MEMORY_LIMITS_MB: 8000
+          KC_MEMORY_REQUESTS_MB: 4000
+          KC_DB_POOL_INITIAL_SIZE: 96
+          KC_DB_POOL_MIN_SIZE: 96
+          KC_DB_POOL_MAX_SIZE: 96
