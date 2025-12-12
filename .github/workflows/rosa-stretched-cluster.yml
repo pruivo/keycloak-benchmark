@@ -211,7 +211,6 @@ jobs:
           ROSA_CLUSTER_NAME: ${{ needs.meta.outputs.clusterName }}
           AURORA_CLUSTER: ${{ needs.meta.outputs.clusterName }}
           AURORA_REGION: ${{ needs.meta.outputs.region }}
-          AURORA_DB_SNAPSHOT_ID: "after-30m-users"
           KC_NAMESPACE_PREFIX: runner-
           KC_OPERATOR_TAG: "26.4.7"
           KC_CPU_LIMITS: 24

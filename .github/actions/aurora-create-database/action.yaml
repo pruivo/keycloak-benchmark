@@ -29,3 +29,4 @@ runs:
         AURORA_INSTANCE_CLASS: ${{ inputs.instanceClass }}
         AWS_REGION: ${{ inputs.region }}
         AURORA_INSTANCES: ${{ inputs.instances }}
+        AURORA_DB_SNAPSHOT_ID: "after-30m-users"
