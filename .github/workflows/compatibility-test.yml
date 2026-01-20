@@ -16,6 +16,12 @@ jobs:
   run-test:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Keycloak main repository
+        uses: actions/checkout@v6
+        with:
+          repository: 'keycloak/keycloak'
+          ref: "main"
+
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
@@ -32,19 +38,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-wrapper-
 
-      - name: Checkout Keycloak main repository
-        uses: actions/checkout@v6
-        with:
-          repository: 'keycloak/keycloak'
-          path: "keycloak"
-          ref: "main"
-
       - name: Build Keycloak
         run: ./mvnw install -DskipTests -am -pl quarkus/server/,quarkus/dist/,tests/clustering
-        working-directory: keycloak
 
       - name: Run test
         run: ./mvnw verify -pl tests/clustering
-        working-directory: keycloak
         env:
           KC_TEST_SERVER_IMAGES: "${{ inputs.image_1 }},${{ inputs.image_2 }}"
