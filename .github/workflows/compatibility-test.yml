@@ -30,10 +30,11 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Build Keycloak
-        run: ./mvnw install dependency:resolve -V -e -DskipTests -DskipExamples -DexcludeGroupIds=org.keycloak -Dsilent=true
-
-      - name: Run test
-        run: ./mvnw verify -pl tests/clustering
+      - name: Testing
+        shell: bash
+        run: |
+          ./mvnw install dependency:resolve -B -V -e -DskipTests -DskipExamples -DexcludeGroupIds=org.keycloak -Dsilent=true
+          ./mvnw package -B -pl quarkus/server/,quarkus/dist/
+          ./mvnw verify -B -pl tests/clustering
         env:
           KC_TEST_SERVER_IMAGES: "${{ inputs.image_1 }},${{ inputs.image_2 }}"
