@@ -14,7 +14,7 @@ on:
 
 jobs:
   compatibility-test:
-    name: Compatibility Testing
+    name: Testing
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Keycloak main repository
@@ -29,15 +29,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-
-      - name: Cache Maven Wrapper
-        uses: actions/cache@v5
-        with:
-          path: |
-            .mvn/wrapper/maven-wrapper.jar
-          key: ${{ runner.os }}-maven-wrapper-${{ hashFiles('**/maven-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-wrapper-
 
       - name: Build Keycloak
         run: ./mvnw install dependency:resolve -V -e -DskipTests -DskipExamples -DexcludeGroupIds=org.keycloak -Dsilent=true
