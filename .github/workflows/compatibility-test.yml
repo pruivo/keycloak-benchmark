@@ -40,7 +40,7 @@ jobs:
             ${{ runner.os }}-maven-wrapper-
 
       - name: Build Keycloak
-        run: ./mvnw install -DskipTests
+        run: ./mvnw install dependency:resolve -V -e -DskipTests -DskipExamples -DexcludeGroupIds=org.keycloak -Dsilent=true
 
       - name: Run test
         run: ./mvnw verify -pl tests/clustering
