@@ -1,0 +1,50 @@
+name: Compatibility Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_1:
+        description: "The image to use for Keycloak instance 1"
+        type: string
+        default: "quay.io/keycloak/keycloak:nightly"
+      image_2:
+        description: "The image to use for Keycloak instance 1"
+        type: string
+        default: "quay.io/keycloak/keycloak:nightly"
+
+jobs:
+  run-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Cache Maven Wrapper
+        uses: actions/cache@v5
+        with:
+          path: |
+            .mvn/wrapper/maven-wrapper.jar
+          key: ${{ runner.os }}-maven-wrapper-${{ hashFiles('**/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-wrapper-
+
+      - name: Checkout Keycloak main repository
+        uses: actions/checkout@v6
+        with:
+          repository: 'keycloak/keycloak'
+          path: "keycloak"
+          ref: "main"
+
+      - name: Build Keycloak
+        run: ./mvnw install -DskipTests -am -pl quarkus/server/,quarkus/dist/,tests/clustering
+        working-directory: keycloak
+
+      - name: Run test
+        run: ./mvnw verify -pl tests/clustering
+        working-directory: keycloak
+        env:
+          KC_TEST_SERVER_IMAGES: "${{ inputs.image_1 }},${{ inputs.image_2 }}"
