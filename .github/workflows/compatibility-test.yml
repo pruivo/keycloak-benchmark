@@ -8,12 +8,13 @@ on:
         type: string
         default: "quay.io/keycloak/keycloak:nightly"
       image_2:
-        description: "The image to use for Keycloak instance 1"
+        description: "The image to use for Keycloak instance 2"
         type: string
         default: "quay.io/keycloak/keycloak:nightly"
 
 jobs:
-  run-test:
+  compatibility-test:
+    name: Compatibility Testing
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Keycloak main repository
@@ -39,7 +40,7 @@ jobs:
             ${{ runner.os }}-maven-wrapper-
 
       - name: Build Keycloak
-        run: ./mvnw install -DskipTests -am -pl quarkus/server/,quarkus/dist/,tests/clustering
+        run: ./mvnw install -DskipTests
 
       - name: Run test
         run: ./mvnw verify -pl tests/clustering
