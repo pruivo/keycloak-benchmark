@@ -209,6 +209,7 @@ jobs:
           --logout-percentage=0
           --measurement=${{ inputs.measurement }}
           --users-per-realm=${{ inputs.usersPerRealm }}
+          --unique-credential-count=${{ inputs.uniqueCredentials }}
           --clients-per-realm=${{ env.CLIENTS_PER_REALM }}
           --log-http-on-failure
           --sla-error-percentage=0.001
@@ -261,6 +262,7 @@ jobs:
           --logout-percentage=100
           --measurement=${{ inputs.measurement }}
           --users-per-realm=${{ inputs.usersPerRealm }}
+          --unique-credential-count=${{ inputs.uniqueCredentials }}
           --clients-per-realm=${{ env.CLIENTS_PER_REALM }}
           --log-http-on-failure
           --sla-error-percentage=0.001
@@ -306,6 +308,7 @@ jobs:
           --ramp-up=20
           --measurement=${{ inputs.measurement }}
           --users-per-realm=${{ inputs.usersPerRealm }}
+          --unique-credential-count=${{ inputs.uniqueCredentials }}
           --clients-per-realm=${{ env.CLIENTS_PER_REALM }}
           --log-http-on-failure
           --sla-error-percentage=0.001
@@ -340,21 +343,21 @@ jobs:
 
       - name: Archive Gatling reports
         if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gatling-results-${{ inputs.outputArchiveSuffix }}
           path: ansible/files/benchmark/*/results
           retention-days: 5
 
       - name: Archive Gatling stats
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: summary-${{ inputs.outputArchiveSuffix }}
           path: ansible/files/benchmark/*/results/*/js/stats.json
           retention-days: 5
 
       - name: Archive Calculated Metrics summary
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: final-report-json-${{ inputs.outputArchiveSuffix }}
           path: |
@@ -383,7 +386,7 @@ jobs:
         with:
           ref: 'result-data'
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: final-report-json-${{ inputs.outputArchiveSuffix }}
 
